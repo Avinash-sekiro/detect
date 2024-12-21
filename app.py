@@ -136,7 +136,7 @@ async def handle_photo(update: Update, context: CallbackContext) -> None:
     await update.message.reply_text(f"Detected Objects:\n{detected_objects_text}")
     await update.message.reply_text(f"Image Analysis:\n{analysis}")
 
-async def search_image(update: Update, context: CallbackContext) -> None:
+async def search(update: Update, context: CallbackContext) -> None:
     if not context.args:
         await update.message.reply_text("Please provide search keywords after the /search command.")
         return
@@ -148,16 +148,13 @@ async def search_image(update: Update, context: CallbackContext) -> None:
             with open(file_path, 'r') as f:
               try:
                 data = json.load(f)
-                if 'detected_objects' in data and isinstance(data['detected_objects'], list):
-                   for obj in data['detected_objects']:
-                     if 'label' in obj and keywords in obj['label'].lower():
-                         found_images.append(data)
-                         break
+                if 'analysis_result' in data and keywords in data['analysis_result'].lower():
+                      found_images.append(data)
               except json.JSONDecodeError:
                 print(f"could not decode {filename}")
 
     if not found_images:
-        await update.message.reply_text("No images found matching those object labels.")
+        await update.message.reply_text("No images found matching those analysis keywords.")
         return
     for data in found_images:
         image_path = data.get('image_path')
@@ -191,7 +188,7 @@ def main() -> None:
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("history", history))
-    application.add_handler(CommandHandler("search", search_image))
+    application.add_handler(CommandHandler("search", search))
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
     application.run_polling()
 
